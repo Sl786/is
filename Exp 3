@@ -1,101 +1,122 @@
-import java.util.*;
-import java.math.BigInteger;
+import random
 
-class DsaAlg {
-    final static BigInteger one = BigInteger.ONE;
-    final static BigInteger zero = BigInteger.ZERO;
+class DsaAlg:
+    one = 1
+    zero = 0
 
-    // Method to find the next probable prime
-    public static BigInteger getNextPrime(String ans) {
-        BigInteger test = new BigInteger(ans);
-        while (!test.isProbablePrime(99)) {
-            test = test.add(one);
-        }
-        return test;
-    }
+    # Method to find the next probable prime
+    @staticmethod
+    def get_next_prime(ans):
+        test = int(ans)
+        while not DsaAlg.is_prime(test):
+            test += DsaAlg.one
+        return test
 
-    // Method to find a factor q of n
-    public static BigInteger findQ(BigInteger n) {
-        BigInteger start = new BigInteger("2");
-        while (!n.isProbablePrime(99)) {
-            while (!(n.mod(start).equals(zero))) {
-                start = start.add(one);
-            }
-            n = n.divide(start);
-        }
-        return n;
-    }
+    # Basic primality test
+    @staticmethod
+    def is_prime(n):
+        if n <= 1:
+            return False
+        if n <= 3:
+            return True
+        if n % 2 == 0 or n % 3 == 0:
+            return False
+        i = 5
+        while i * i <= n:
+            if n % i == 0 or n % (i + 2) == 0:
+                return False
+            i += 6
+        return True
 
-    // Method to find generator g
-    public static BigInteger getGen(BigInteger p, BigInteger q, Random r) {
-        BigInteger h = new BigInteger(p.bitLength(), r);
-        h = h.mod(p);
-        return h.modPow((p.subtract(one)).divide(q), p);
-    }
+    # Method to find a factor q of n
+    @staticmethod
+    def find_q(n):
+        start = 2
+        while not DsaAlg.is_prime(n):
+            while n % start != 0:
+                start += DsaAlg.one
+            n = n // start
+        return n
 
-    public static void main(String[] args) throws Exception {
-        Random randObj = new Random();
+    # Method to find generator g
+    @staticmethod
+    def get_gen(p, q, rand_obj):
+        h = rand_obj.randint(2, p - 1)
+        return pow(h, (p - 1) // q, p)
 
-        // Finding primes p and q
-        BigInteger p = getNextPrime("10600"); // approximate prime
-        BigInteger q = findQ(p.subtract(one));
-        BigInteger g = getGen(p, q, randObj);
+    # Modular inverse function using Extended Euclidean Algorithm
+    @staticmethod
+    def mod_inverse(a, m):
+        m0, x0, x1 = m, 0, 1
+        while a > 1:
+            q = a // m
+            m, a = a % m, m
+            x0, x1 = x1 - q * x0, x0
+        if x1 < 0:
+            x1 += m0
+        return x1
 
-        System.out.println("Simulation of Digital Signature Algorithm\n");
-        System.out.println("Global public key components are:\n");
-        System.out.println("p is: " + p);
-        System.out.println("q is: " + q);
-        System.out.println("g is: " + g);
+    @staticmethod
+    def main():
+        rand_obj = random.SystemRandom()
 
-        // Private key x
-        BigInteger x = new BigInteger(q.bitLength(), randObj);
-        x = x.mod(q);
+        # Finding primes p and q
+        p = DsaAlg.get_next_prime("10600")  # approximate prime
+        q = DsaAlg.find_q(p - 1)
+        g = DsaAlg.get_gen(p, q, rand_obj)
 
-        // Public key y
-        BigInteger y = g.modPow(x, p);
+        print("Simulation of Digital Signature Algorithm\n")
+        print("Global public key components are:\n")
+        print(f"p is: {p}")
+        print(f"q is: {q}")
+        print(f"g is: {g}")
 
-        // Random secret k
-        BigInteger k = new BigInteger(q.bitLength(), randObj);
-        k = k.mod(q);
+        # Private key x
+        x = rand_obj.randint(1, q - 1)
 
-        // Signature component r
-        BigInteger r = (g.modPow(k, p)).mod(q);
+        # Public key y
+        y = pow(g, x, p)
 
-        // Random hash value
-        BigInteger hashVal = new BigInteger(p.bitLength(), randObj);
+        # Random secret k
+        k = rand_obj.randint(1, q - 1)
 
-        // Signature component s
-        BigInteger kInv = k.modInverse(q);
-        BigInteger s = kInv.multiply(hashVal.add(x.multiply(r)));
-        s = s.mod(q);
+        # Signature component r
+        r = pow(g, k, p) % q
 
-        System.out.println("\nSecret information are:\n");
-        System.out.println("x (private) is: " + x);
-        System.out.println("k (secret) is: " + k);
-        System.out.println("y (public) is: " + y);
-        System.out.println("h (random hash) is: " + hashVal);
+        # Random hash value
+        hash_val = rand_obj.randint(1, p - 1)
 
-        System.out.println("\nGenerating digital signature:\n");
-        System.out.println("r is: " + r);
-        System.out.println("s is: " + s);
+        # Signature component s
+        k_inv = DsaAlg.mod_inverse(k, q)
+        s = (k_inv * (hash_val + x * r)) % q
 
-        // Verification process
-        BigInteger w = s.modInverse(q);
-        BigInteger u1 = (hashVal.multiply(w)).mod(q);
-        BigInteger u2 = (r.multiply(w)).mod(q);
-        BigInteger v = (g.modPow(u1, p)).multiply(y.modPow(u2, p)).mod(p).mod(q);
+        print("\nSecret information are:\n")
+        print(f"x (private) is: {x}")
+        print(f"k (secret) is: {k}")
+        print(f"y (public) is: {y}")
+        print(f"h (random hash) is: {hash_val}")
 
-        System.out.println("\nVerifying digital signature (checkpoints):\n");
-        System.out.println("w is: " + w);
-        System.out.println("u1 is: " + u1);
-        System.out.println("u2 is: " + u2);
-        System.out.println("v is: " + v);
+        print("\nGenerating digital signature:\n")
+        print(f"r is: {r}")
+        print(f"s is: {s}")
 
-        // Checking if signature is valid
-        if (v.equals(r)) {
-            System.out.println("\nSuccess: digital signature is verified!\n");
-        } else {
-            System.out.println("\nError: incorrect digital signature\n");
-        }
-    }
-}
+        # Verification process
+        w = DsaAlg.mod_inverse(s, q)
+        u1 = (hash_val * w) % q
+        u2 = (r * w) % q
+        v = (pow(g, u1, p) * pow(y, u2, p) % p) % q
+
+        print("\nVerifying digital signature (checkpoints):\n")
+        print(f"w is: {w}")
+        print(f"u1 is: {u1}")
+        print(f"u2 is: {u2}")
+        print(f"v is: {v}")
+
+        # Checking if signature is valid
+        if v == r:
+            print("\nSuccess: digital signature is verified!\n")
+        else:
+            print("\nError: incorrect digital signature\n")
+
+# Run the main method
+DsaAlg.main()
