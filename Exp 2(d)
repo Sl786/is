@@ -1,0 +1,108 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <math.h>
+
+// Define union for byte operations in MD5
+typedef union uwb {
+    unsigned w;
+    unsigned char b[4];
+} MD5union;
+
+// Define digest array type for MD5
+typedef unsigned DigestArray[4];
+
+// Rotate left function
+unsigned rol(unsigned r, short N) {
+    return (r << N) | (r >> (32 - N));
+}
+
+// MD5 functions for bitwise operations
+unsigned func0(unsigned abcd[]) { return (abcd[1] & abcd[2]) | (~abcd[1] & abcd[3]); }
+unsigned func1(unsigned abcd[]) { return (abcd[3] & abcd[1]) | (~abcd[3] & abcd[2]); }
+unsigned func2(unsigned abcd[]) { return abcd[1] ^ abcd[2] ^ abcd[3]; }
+unsigned func3(unsigned abcd[]) { return abcd[2] ^ (abcd[1] | ~abcd[3]); }
+
+typedef unsigned (*DgstFctn)(unsigned a[]);
+
+// Calculate MD5 table with sine values
+unsigned *calctable(unsigned *k) {
+    double pwr = pow(2, 32);
+    for (int i = 0; i < 64; i++) {
+        k[i] = (unsigned)(fabs(sin(1 + i)) * pwr);
+    }
+    return k;
+}
+
+// MD5 main function
+unsigned *md5(const char *msg, int mlen) {
+    static DigestArray h0 = { 0x67452301, 0xEFCDAB89, 0x98BADCFE, 0x10325476 };
+    static DgstFctn ff[] = { &func0, &func1, &func2, &func3 };
+    static short M[] = { 1, 5, 3, 7 };
+    static short O[] = { 0, 1, 5, 0 };
+    static short rot0[] = { 7, 12, 17, 22 };
+    static short rot1[] = { 5, 9, 14, 20 };
+    static short rot2[] = { 4, 11, 16, 23 };
+    static short rot3[] = { 6, 10, 15, 21 };
+    static short *rots[] = { rot0, rot1, rot2, rot3 };
+    static unsigned kspace[64];
+    static unsigned *k = NULL;
+    static DigestArray h; // Static to avoid returning a local variable address
+    DigestArray abcd;
+    int os = 0;
+    
+    if (k == NULL) k = calctable(kspace);
+    for (int q = 0; q < 4; q++) h[q] = h0[q];
+    
+    int grps = 1 + (mlen + 8) / 64;
+    unsigned char *msg2 = malloc(64 * grps);
+    memcpy(msg2, msg, mlen);
+    msg2[mlen] = 0x80;
+    memset(msg2 + mlen + 1, 0, 64 * grps - mlen - 1);
+    
+    MD5union u;
+    u.w = 8 * mlen;
+    memcpy(msg2 + 64 * grps - 8, &u.w, 4);
+    
+    for (int grp = 0; grp < grps; grp++) {
+        MD5union mm[16];
+        memcpy(mm, msg2 + os, 64);
+        for (int q = 0; q < 4; q++) abcd[q] = h[q];
+        for (int p = 0; p < 4; p++) {
+            DgstFctn fctn = ff[p];
+            short *rotn = rots[p];
+            short m = M[p], o = O[p];
+            for (int q = 0; q < 16; q++) {
+                int g = (m * q + o) % 16;
+                unsigned f = abcd[1] + rol(abcd[0] + fctn(abcd) + k[q + 16 * p] + mm[g].w, rotn[q % 4]);
+                abcd[0] = abcd[3];
+                abcd[3] = abcd[2];
+                abcd[2] = abcd[1];
+                abcd[1] = f;
+            }
+        }
+        for (int p = 0; p < 4; p++) h[p] += abcd[p];
+        os += 64;
+    }
+    free(msg2);
+    return h;
+}
+
+int main() {
+    const char *msg = "The quick brown fox jumps over the lazy dog";
+    unsigned *d = md5(msg, strlen(msg));
+    MD5union u;
+    
+    printf("\tMD5 ENCRYPTION ALGORITHM IN C\n\n");
+    printf("Input String to be Encrypted using MD5:\n\t%s", msg);
+    printf("\n\nThe MD5 code for input string is:\n\t= 0x");
+    
+    for (int j = 0; j < 4; j++) {
+        u.w = d[j];
+        for (int k = 0; k < 4; k++)
+            printf("%02x", u.b[k]);
+    }
+    
+    printf("\n\n\tMD5 Encryption Successfully Completed!!!\n\n");
+    return 0;
+}
