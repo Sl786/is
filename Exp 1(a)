@@ -1,0 +1,51 @@
+#include <stdio.h>
+#include <string.h>
+#include <ctype.h>
+
+int main() {
+    char plain[10], cipher[10];
+    int key, i, length;
+
+    printf("\nEnter the plain text: ");
+    scanf("%s", plain);
+
+    printf("\nEnter the key value: ");
+    scanf("%d", &key);
+
+    printf("\n\n\tPLAIN TEXT: %s", plain);
+    printf("\n\n\tENCRYPTED TEXT: ");
+
+    // Encryption process
+    for (i = 0, length = strlen(plain); i < length; i++) {
+        cipher[i] = plain[i] + key;
+
+        // Wrapping around if the character exceeds 'Z' or 'z'
+        if (isupper(plain[i]) && cipher[i] > 'Z')
+            cipher[i] -= 26;
+        else if (islower(plain[i]) && cipher[i] > 'z')
+            cipher[i] -= 26;
+
+        printf("%c", cipher[i]);
+    }
+    cipher[length] = '\0';  // Null-terminate the cipher string
+
+    printf("\n\n\tAFTER DECRYPTION: ");
+
+    // Decryption process
+    for (i = 0; i < length; i++) {
+        plain[i] = cipher[i] - key;
+
+        // Wrapping around if the character goes below 'A' or 'a'
+        if (isupper(cipher[i]) && plain[i] < 'A')
+            plain[i] += 26;
+        else if (islower(cipher[i]) && plain[i] < 'a')
+            plain[i] += 26;
+
+        printf("%c", plain[i]);
+    }
+    plain[length] = '\0';  // Null-terminate the plain text
+
+    printf("\n");
+
+    return 0;
+}
