@@ -1,0 +1,114 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <math.h>
+#include <string.h>
+
+long int p, q, n, t, e[100], d[100], temp[100], m[100], en[100];
+char msg[100];
+int prime(long int);
+void calculate_e_d();
+long int calculate_d(long int);
+void encrypt();
+void decrypt();
+
+int main() {
+    printf("Enter first prime number: ");
+    scanf("%ld", &p);
+    if (!prime(p)) {
+        printf("Invalid input\n");
+        return 1;
+    }
+
+    printf("Enter another prime number: ");
+    scanf("%ld", &q);
+    if (!prime(q) || p == q) {
+        printf("Invalid input\n");
+        return 1;
+    }
+
+    printf("Enter message: ");
+    scanf("%s", msg);
+    for (int i = 0; msg[i] != '\0'; i++)
+        m[i] = msg[i];
+
+    n = p * q;
+    t = (p - 1) * (q - 1);
+    calculate_e_d();
+
+    printf("Possible values of e and d are:\n");
+    for (int i = 0; i < 100 && e[i] != 0; i++)
+        printf("%ld\t%ld\n", e[i], d[i]);
+
+    encrypt();
+    decrypt();
+
+    return 0;
+}
+
+int prime(long int pr) {
+    if (pr < 2) return 0;
+    for (int i = 2; i <= sqrt(pr); i++)
+        if (pr % i == 0) return 0;
+    return 1;
+}
+
+void calculate_e_d() {
+    int k = 0;
+    for (long int i = 2; i < t; i++) {
+        if (t % i == 0 || !prime(i) || i == p || i == q)
+            continue;
+        long int d_val = calculate_d(i);
+        if (d_val > 0) {
+            e[k] = i;
+            d[k] = d_val;
+            k++;
+        }
+        if (k == 100) break;
+    }
+}
+
+long int calculate_d(long int x) {
+    long int k = 1;
+    while (1) {
+        k += t;
+        if (k % x == 0) return k / x;
+    }
+}
+
+void encrypt() {
+    long int key = e[0], pt, ct, k;
+    int len = strlen(msg);
+    for (int i = 0; i < len; i++) {
+        pt = m[i] - 96;
+        k = 1;
+        for (int j = 0; j < key; j++) {
+            k = (k * pt) % n;
+        }
+        temp[i] = k;
+        en[i] = k + 96;
+    }
+    en[len] = -1;
+
+    printf("Encrypted message: ");
+    for (int i = 0; en[i] != -1; i++)
+        printf("%c", en[i]);
+    printf("\n");
+}
+
+void decrypt() {
+    long int key = d[0], pt, ct, k;
+    for (int i = 0; en[i] != -1; i++) {
+        ct = temp[i];
+        k = 1;
+        for (int j = 0; j < key; j++) {
+            k = (k * ct) % n;
+        }
+        m[i] = k + 96;
+    }
+    m[strlen(msg)] = -1;
+
+    printf("Decrypted message: ");
+    for (int i = 0; m[i] != -1; i++)
+        printf("%c", m[i]);
+    printf("\n");
+}
