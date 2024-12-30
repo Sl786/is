@@ -1,0 +1,59 @@
+### Understanding the Digital Signature Algorithm (DSA) Code
+
+**Concept**:
+The Digital Signature Algorithm (DSA) is a cryptographic algorithm used to generate and verify digital signatures. It ensures the authenticity and integrity of digital messages or documents. The key components of DSA include key generation, signature generation, and signature verification.
+
+**Code Explanation**:
+
+1. **Finding Primes (p and q)**:
+   - `get_next_prime`: Finds the next probable prime number greater than a given number.
+   - `find_q`: Finds a prime factor `q` of `p-1`, where `p` is the prime number found.
+
+2. **Generator (g)**:
+   - `get_gen`: Computes the generator `g` using primes `p` and `q`.
+
+3. **Modular Inverse**:
+   - `mod_inverse`: Computes the modular inverse of a given number using the Extended Euclidean Algorithm.
+
+4. **Key Generation**:
+   - **Private Key (x)**: A random number between 1 and `q-1`.
+   - **Public Key (y)**: Computed as `y = g^x mod p`.
+
+5. **Signature Generation**:
+   - **Random Secret (k)**: A random number between 1 and `q-1`.
+   - **Signature Components (r and s)**:
+     - `r = (g^k mod p) mod q`.
+     - `s = k_inv * (hash_val + x * r) mod q`, where `k_inv` is the modular inverse of `k`.
+
+6. **Verification Process**:
+   - **Verify Signature**:
+     - Compute `w = mod_inverse(s, q)`.
+     - Compute `u1 = (hash_val * w) mod q` and `u2 = (r * w) mod q`.
+     - Compute `v = ((g^u1 mod p) * (y^u2 mod p) mod p) mod q`.
+     - Check if `v` equals `r` to verify the signature.
+
+### Basic Viva Q&A for DSA
+
+**Q1. What is the purpose of the Digital Signature Algorithm (DSA)?**
+- **Answer**: The purpose of DSA is to generate and verify digital signatures, ensuring the authenticity and integrity of digital messages or documents.
+
+**Q2. What are the main steps involved in the DSA?**
+- **Answer**: The main steps are key generation, signature generation, and signature verification.
+
+**Q3. What is the significance of primes `p` and `q` in DSA?**
+- **Answer**: Primes `p` and `q` are used to define the finite field and subgroup for the cryptographic operations in DSA, ensuring security and uniqueness of the keys.
+
+**Q4. How is the generator `g` computed in DSA?**
+- **Answer**: The generator `g` is computed as `g = h^((p-1)/q) mod p`, where `h` is a random number between 2 and `p-1`.
+
+**Q5. What is the role of the modular inverse in DSA?**
+- **Answer**: The modular inverse is used to compute the signature component `s` and during the signature verification process.
+
+**Q6. How is the private key `x` and public key `y` generated in DSA?**
+- **Answer**: The private key `x` is a random number between 1 and `q-1`, and the public key `y` is computed as `y = g^x mod p`.
+
+**Q7. What are the signature components `r` and `s` in DSA?**
+- **Answer**: `r` is computed as `(g^k mod p) mod q`, and `s` is computed as `k_inv * (hash_val + x * r) mod q`.
+
+**Q8. How is the signature verified in DSA?**
+- **Answer**: The signature is verified by computing `w`, `u1`, `u2`, and `v`, and checking if `v` equals `r`.
